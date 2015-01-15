@@ -1,0 +1,108 @@
+---
+title: "Data Mining - HW 1"
+date: "Thursday, January 15, 2015"
+output: html_document
+authors: Tzu-Yuan Lin, Marcus A. Streips
+---
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(ggplot2)
+library(lattice)
+library(rpart)
+library(party)
+# library(partykit)
+library(vcd)
+library(vcdExtra)
+library(arules)
+library(plyr)
+library(dplyr)
+library(C50)
+library(AppliedPredictiveModeling)
+library(caret)
+library(e1071)
+
+data <- read.csv("salary-class.csv")
+```
+authors: "Tzu-Yuan Lin, Marcus A. Streips"
+
+**Question 1**
+  
+**(a) Read the data set. Our goal is to predict INCOME. How many records do we have?**
+
+The data set has **32,561** records. Using the R `str` command gives us:
+
+'data.frame':        32561 obs. of  11 variables:
+
+
+**(b) What are the types of each field be (interval, ordinal, nominal, flag)?**
+
+- AGE     : int   **(interval/continuous)**
+- EMPLOYER: Factor w/ 9 levels " ?"," Federal-gov",..: **(nominal)**
+- DEGREE  : Factor w/ 16 levels " 10th"," 11th",..:  **(ordinal)**
+- MSTATUS : Factor w/ 7 levels " Divorced"," Married-AF-spouse",..: **(nominal)**
+- JOBTYPE : Factor w/ 15 levels " ?"," Adm-clerical",..:  **(nominal)**
+- SEX     : Factor w/ 2 levels " Female"," Male": . **(flag)**
+- C.GAIN  : int  2174 0 0 0 0 0 0 0 14084 5178 ... **(interval/continuous)**
+- C.LOSS  : int  0 0 0 0 0 0 0 0 0 0 ... **(interval/continuous)**
+- HOURS   : int  40 13 40 40 40 40 16 45 50 40 ... **(interval/continuous)**
+- COUNTRY : Factor w/ 42 levels " ?"," Cambodia",..: .**(nominal)**
+- INCOME  : Factor w/ 2 levels " <=50K"," >50K": **(flag)**
+  
+**(c) What effect does each of these three fields seem to have on INCOME?**
+
+```{r boxplot, fig.height=4, fig.width=4,echo=FALSE}
+boxplot(AGE ~ INCOME, data, xlab="Income Interval", ylab="Age")
+freqtbl_age <-as.data.frame((with(data, table(INCOME, AGE))))
+ggplot(freqtbl_age, aes(INCOME, AGE)) +
+        geom_tile(aes(fill = Freq), colour = "black") +
+        scale_fill_gradient(low = "white", high = "steelblue")
+freqtbl_sex <- as.data.frame((with(data, table(INCOME, SEX))))
+ggplot(freqtbl_sex, aes(INCOME, SEX)) +
+        geom_tile(aes(fill = Freq), colour = "black") +
+        scale_fill_gradient(low = "white", high = "steelblue")
+freqtbl_degree <-as.data.frame((with(data, table(INCOME, DEGREE))))
+ggplot(freqtbl_degree, aes(INCOME, DEGREE)) +
+        geom_tile(aes(fill = Freq), colour = "black") +
+        scale_fill_gradient(low = "white", high = "steelblue")
+
+```
+  
+As seen from the figures above, those **earning >=$50 K** are expected to **live longer** on average, be **male**, and are **less** likely to have dropped out of school before 12th grade. 
+  
+**Question 2**
+  
+**(a) Find the support and confidence for the rule "if department = systems then salary = 46K..50K"**
+  
+Using the `apriori` command from the `arules` package we get the following:  
+  
+```{r, eval=FALSE}
+   lhs                     rhs                      support confidence     lift
+
+12 {department=systems} => {salary=46K..50K}      0.1388889  0.7142857 1.978022
+```
+  
+
+**(b) Which of these three sets of rules has the lowest misclassification rate?**
+  
+Using the `C5.0` command from the `C50` package we determine that **AGE** has the lowest misclassification rate at **27.8%** (see results below), when compared to status (50%) and department (52.8%)(results not shown).  
+  
+This is confirmed by the SPSS analysis attached. 
+
+```{r, eval=FALSE}
+Evaluation on training data (180 cases):
+
+                Rules     
+	  ----------------
+	    No      Errors
+
+	     5   50(27.8%)   <<
+
+
+	   (a)   (b)   (c)   (d)   (e)   (f)    <-classified as
+	  ----  ----  ----  ----  ----  ----
+	    50                                  (a): class 26K..30K
+	          40                            (b): class 31K..35K
+	                 5                      (c): class 36K..40K
+	          10                            (d): class 41K..45K
+	     5    30                30          (e): class 46K..50K
+	           5                       5    (f): class 66K..70K
+```
