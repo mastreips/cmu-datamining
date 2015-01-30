@@ -14,6 +14,7 @@ library(caret)
 library(e1071)
 library(reldist)
 library(gains)
+library(pROC)
 
 setwd("~/Google Drive/Tepper/Data Mining/Module 3") #mac
 
@@ -90,3 +91,10 @@ ord_data <- arrange(pred_data, desc(PROB.0))
 
 #response chart
 plot((1-quantile(ord_data$PROB.1, probs=seq(0,1,0.01))), type="l")
+
+#ROC chart
+roc_chart <- roc(predictor = as.numeric(rpartPred), response =data_test$BAD, 
+                 levels = rev(levels(data_test$BAD)))
+# roc_chart <- roc(predictor = as.numeric(rpartPred), response =data_test$BAD)
+plot(roc_chart)
+
