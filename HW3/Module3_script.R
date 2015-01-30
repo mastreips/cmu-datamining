@@ -89,4 +89,4 @@ pred_data <- cbind(pred_data, 'PROB'=rpartProb) #add probability
 ord_data <- arrange(pred_data, desc(PROB.0))
 
 #response chart
-plot(quantile(ord_data$PROB.1, probs=seq(0,1,0.01)), type="l")
+plot((1-quantile(ord_data$PROB.1, probs=seq(0,1,0.01))), type="l")
